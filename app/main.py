@@ -38,8 +38,6 @@ def get_qwen_client() -> QwenClient:
     if qwen_client is None:
         api_key = os.getenv("QWEN_API_KEY")
         base_url = os.getenv("QWEN_API_BASE_URL")
-        if not api_key:
-            raise ValueError("Missing QWEN_API_KEY environment variable. Set it in .env or the environment.")
         qwen_client = QwenClient(api_key=api_key, base_url=base_url, model=QWEN_MODEL)
     return qwen_client
 
@@ -65,7 +63,8 @@ def root() -> HTMLResponse:
 
 @app.post("/chat", response_model=ChatResponse)
 def chat(request: ChatRequest, db: Session = Depends(get_db)) -> ChatResponse:
-    manager = MemoryManager(db, qwen_client)
+    client = get_qwen_client()
+    manager = MemoryManager(db, client)
     manager.add_conversation_message(request.user_id, "user", request.message)
     manager.decay_memories(request.user_id)
     history_records = manager.get_conversation_history(request.user_id, limit=8)
@@ -105,13 +104,13 @@ def chat(request: ChatRequest, db: Session = Depends(get_db)) -> ChatResponse:
 
 @app.get("/memory/{user_id}", response_model=List[MemoryOut])
 def read_memories(user_id: str, db: Session = Depends(get_db)) -> List[MemoryOut]:
-    manager = MemoryManager(db, qwen_client)
+    manager = MemoryManager(db, get_qwen_client())
     memories = manager.get_memories(user_id)
     return [MemoryOut.from_orm(memory) for memory in memories]
 
 
 @app.post("/reset_memory")
 def reset_memory(request: ResetMemoryRequest, db: Session = Depends(get_db)) -> dict:
-    manager = MemoryManager(db, qwen_client)
+    manager = MemoryManager(db, get_qwen_client())
     manager.clear_memory(request.user_id)
     return {"status": "ok", "message": f"Memory cleared for user {request.user_id}"}

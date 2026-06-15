@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>QwenMemoryAgent</title>
+    <style>
+      body { font-family: Arial, sans-serif; margin: 0; padding: 0; background: #f4f6fb; color: #1f2937; }
+      .container { max-width: 800px; margin: 0 auto; padding: 24px; }
+      h1 { margin-bottom: 8px; }
+      .chat-box { background: #fff; border-radius: 16px; box-shadow: 0 12px 30px rgba(15, 23, 42, 0.08); padding: 20px; }
+      textarea, input { width: 100%; border: 1px solid #d1d5db; border-radius: 10px; padding: 12px; margin-top: 8px; resize: vertical; }
+      button { background: #2563eb; color: white; border: none; padding: 12px 18px; border-radius: 10px; cursor: pointer; margin-top: 10px; }
+      button:hover { background: #1d4ed8; }
+      .message { padding: 12px 14px; border-radius: 12px; margin: 10px 0; }
+      .user { background: #eef2ff; text-align: right; }
+      .assistant { background: #e0f2fe; text-align: left; }
+      .memory-list { margin-top: 18px; }
+      .memory-item { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 10px; margin-top: 8px; }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h1>QwenMemoryAgent</h1>
+      <p>A simple chat UI that demonstrates persistent memory across sessions.</p>
+      <div class="chat-box">
+        <label>User ID</label>
+        <input id="userId" type="text" placeholder="Enter your user ID" value="user-123" />
+        <label>Message</label>
+        <textarea id="message" rows="4" placeholder="Ask a question or tell the assistant something memorable"></textarea>
+        <button id="sendBtn">Send</button>
+        <div id="output"></div>
+      </div>
+      <div class="memory-list" id="memoryList"></div>
+    </div>
+    <script>
+      const sendBtn = document.getElementById('sendBtn');
+      const output = document.getElementById('output');
+      const memoryList = document.getElementById('memoryList');
+      const userIdInput = document.getElementById('userId');
+      const messageInput = document.getElementById('message');
+
+      async function loadMemories(userId) {
+        const response = await fetch(`/memory/${encodeURIComponent(userId)}`);
+        const memories = await response.json();
+        memoryList.innerHTML = '<h3>Stored memories</h3>' + memories.map(mem => {
+          return `<div class="memory-item"><strong>${mem.category}</strong>: ${mem.memory_text}<br><small>importance=${mem.importance_score.toFixed(2)}</small></div>`;
+        }).join('');
+      }
+
+      sendBtn.addEventListener('click', async () => {
+        const userId = userIdInput.value.trim();
+        const message = messageInput.value.trim();
+        if (!userId || !message) return;
+        const response = await fetch('/chat', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ user_id: userId, message }),
+        });
+        const result = await response.json();
+        output.innerHTML += `<div class="message user"><strong>You:</strong><br>${message}</div>`;
+        output.innerHTML += `<div class="message assistant"><strong>Assistant:</strong><br>${result.response}</div>`;
+        messageInput.value = '';
+        await loadMemories(userId);
+      });
+
+      document.getElementById('userId').addEventListener('change', () => {
+        const userId = userIdInput.value.trim();
+        if (userId) loadMemories(userId);
+      });
+
+      loadMemories(userIdInput.value.trim());
+    </script>
+  </body>
+</html>

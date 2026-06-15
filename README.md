@@ -18,10 +18,48 @@ A memory-enhanced AI assistant prototype built with FastAPI, SQLite, and Qwen Cl
 - `app/models.py` - SQLAlchemy models for memory and conversation history
 - `app/schemas.py` - Pydantic request/response models
 - `app/qwen_client.py` - Qwen Cloud API wrapper
-- `app/memory_manager.py` - memory extraction, retrieval, decay, and storage logic
+- `app/alibaba_client.py` - Alibaba Cloud SDK helper for ECS provisioning
+- `deploy_alibaba.py` - Alibaba Cloud deployment helper script
+- `alibaba_deploy.sh` - convenience wrapper for Alibaba Cloud deployment
 - `static/index.html` - simple browser chat UI
 - `requirements.txt` - Python dependencies
 - `.env.example` - environment variable template
+
+## Alibaba Cloud Deployment
+
+This project includes an Alibaba Cloud deployment helper that demonstrates Alibaba Cloud API usage via `aliyun-python-sdk-core` and `aliyun-python-sdk-ecs`.
+
+1. Set Alibaba Cloud credentials in `.env`:
+
+```bash
+ALIBABA_CLOUD_ACCESS_KEY_ID=your_alibaba_access_key_id
+ALIBABA_CLOUD_ACCESS_KEY_SECRET=your_alibaba_access_key_secret
+ALIBABA_CLOUD_REGION=cn-hangzhou
+```
+
+2. Activate the virtual environment:
+
+```bash
+source .venv/bin/activate
+```
+
+3. List ECS instances:
+
+```bash
+python deploy_alibaba.py --list
+```
+
+4. Create a new ECS instance:
+
+```bash
+python deploy_alibaba.py --create --security-group-id sg-xxxxxxxx
+```
+
+5. Delete an ECS instance:
+
+```bash
+python deploy_alibaba.py --delete i-xxxxxxxx
+```
 
 ## Setup
 
